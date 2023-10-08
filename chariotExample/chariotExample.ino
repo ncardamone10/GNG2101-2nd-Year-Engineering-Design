@@ -2,9 +2,10 @@
 // WARNING: This code has been refactored by chatgpt and is untested. Use at your own risk
 
 // Include necessary libraries for motor control, ultrasonic sensor, and software serial communication
-#include <AFMotor.h>
-#include <NewPing.h>
-#include <SoftwareSerial.h>
+#include "arduino libraries_2101\adafruit-Adafruit-Motor-Shield-library-89a0973\AFMotor.h"
+#include "arduino libraries_2101\NewPing\NewPing.h"
+#include "arduino libraries_2101\SoftwareSerial\src\SoftwareSerial.h"
+
 
 // Define symbolic constants for ultrasonic sensor pins and maximum distance
 #define TRIGGER_PIN  A0                                 // Define the pin number for the trigger pin of the ultrasonic sensor
@@ -25,6 +26,31 @@ void setup() {
   // Initialize motors and serial communication
   initializeMotors();                                   // Call the function to initialize motors
   initializeSerialCommunication();                      // Call the function to initialize serial communication
+}
+
+// Main loop where the program runs over and over
+void loop() {
+  char reply[100];                                      // Array to store received serial data
+  int i = 0;                                            // Index variable for array
+  
+  // Read incoming serial data and store it in the 'reply' array
+  while (mySerial.available()) {
+    reply[i] = mySerial.read();                         // Store each byte of data in the array
+    i++;                                                // Move to the next array index
+  }
+  
+  sensor_read();                                        // Call function to check for obstructions
+  reply[i] = '\0';                                      // End the string with null termination 
+  
+  // Check if any serial data was received and control motors accordingly
+  if(strlen(reply) > 0){
+      Serial.println("Button pressed");                 // Print message indicating a button was pressed
+      Serial.println(reply);                            // Print the received data
+      moveMotors(reply[0]);                             // Call function to control motors based on the first character of received data
+  } else {
+    Serial.println("Button released");                  // Print message indicating the button was released
+    stopMotors();                                       // Call function to stop motors
+  }
 }
 
 // Function to initialize motors by setting their speed
@@ -84,29 +110,4 @@ void runMotors(int leftMotorDirection, int rightMotorDirection) {
 void stopMotors() {
   leftmotor.run(RELEASE);                               // Stop the left motor
   rightmotor.run(RELEASE);                              // Stop the right motor
-}
-
-// Main loop where the program runs over and over
-void loop() {
-  char reply[100];                                      // Array to store received serial data
-  int i = 0;                                            // Index variable for array
-  
-  // Read incoming serial data and store it in the 'reply' array
-  while (mySerial.available()) {
-    reply[i] = mySerial.read();                         // Store each byte of data in the array
-    i++;                                                // Move to the next array index
-  }
-  
-  sensor_read();                                        // Call function to check for obstructions
-  reply[i] = '\0';                                      // End the string with null termination 
-  
-  // Check if any serial data was received and control motors accordingly
-  if(strlen(reply) > 0){
-      Serial.println("Button pressed");                 // Print message indicating a button was pressed
-      Serial.println(reply);                            // Print the received data
-      moveMotors(reply[0]);                             // Call function to control motors based on the first character of received data
-  } else {
-    Serial.println("Button released");                  // Print message indicating the button was released
-    stopMotors();                                       // Call function to stop motors
-  }
 }
